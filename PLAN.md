@@ -134,6 +134,6 @@ MUST NOT:
 - **Phase 4 — readme + packaging.** goreleaser; `go install`; curl install script; brew (`iris-tl`) if warranted. Release.
 - **Phase 5 — website.**
 
-**Done bar:** all three scenes working — two people's agents over the tunnel, two agents on one machine, one person across two machines. Phases are build order, not release gates; nothing ships or gets dogfood-blessed on Phase 1 alone. That's the product.
+**Done bar:** all three scenes working — two people's agents over the tunnel, two agents on one machine, one person across two machines. Phases are build order, not release gates; nothing ships or gets dogfood-blessed on Phase 1 alone. That's the product. **Cross-network verified 2026-09-01** between a laptop behind home NAT and a Vercel sandbox in iad1, both directions: peer joined in ~1s, messages and 2MB files round-tripped, provisioning blocked over the tunnel, and magicsock upgraded from DERP to a direct UDP path within 5s. Scene 1 differs from scene 3 only in who holds the token, so the transport is proven; what remains is agents driving it (the skill).
 
 **Separate tracks:** skill (authored by Parth from scratch); README (written after the build: pitch → instructions → example scenes → reference, the reference section absorbing the protocol contract above); landing site (`site/`, already in progress).
