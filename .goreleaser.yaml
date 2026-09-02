@@ -1,0 +1,21 @@
+# Release build. Build tags come from build-tags.txt via GOFLAGS, which the
+# release workflow exports; for a local snapshot:
+#   GOFLAGS=-tags=$(cat build-tags.txt) goreleaser release --snapshot --clean
+version: 2
+project_name: iris
+builds:
+  - binary: iris
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{ .Version }}"]
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE]
+checksum:
+  name_template: checksums.txt
+changelog:
+  use: github
