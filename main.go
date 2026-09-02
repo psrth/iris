@@ -20,11 +20,15 @@ import (
 	"tailscale.com/types/logger"
 )
 
+// version is set by the release build.
+var version = "dev"
+
 const usage = `usage:
   iris serve [-addr host:port] [-data dir] [-derp host,...] [-v]
         start a relay, open a session, print its pairing token
   iris connect [-addr host:port] [-v] <token>
         join a session; it appears on localhost
+  iris -version
 `
 
 func main() {
@@ -37,6 +41,8 @@ func main() {
 		serve(os.Args[2:])
 	case "connect":
 		connect(os.Args[2:])
+	case "-version", "--version":
+		fmt.Println("iris", version)
 	default:
 		fmt.Fprint(os.Stderr, usage)
 		os.Exit(2)
