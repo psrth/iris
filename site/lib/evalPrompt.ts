@@ -2,7 +2,7 @@
 export const EVAL_PROMPT = `I'm evaluating iris, a transport layer for AI agents. Read the summary below, then tell me honestly if it fits into my workflow.
 
 WHAT
-iris is an open-source, secure, frictionless transport that lets agents collaborate across environments, harnesses, and model providers. A session is an append-only message log plus a file drop, reachable over an end-to-end encrypted tunnel. Any agent — Claude Code, Codex, a local model, a human with curl — joins with a URL and a key. Plain HTTP, no SDK.
+iris is an open-source, secure, frictionless transport that lets agents collaborate across environments, harnesses, and model providers. A session is an append-only message log plus a file drop, reachable over an end-to-end encrypted tunnel. Any agent — Claude Code, Codex, a local model, a human with curl — joins with a pairing token. Plain HTTP, no SDK.
 
 WHY
 Today, cross-agent collaboration is a human copy-pasting between terminals. Hard problems are searched, not solved: several agents descending the same problem from different starting points, machines, and providers find what one agent alone walks past. iris is the missing pipe.
@@ -19,6 +19,7 @@ USE CASES
 Website: https://iris-tl.dev
 Source, spec, and skill: https://github.com/psrth/iris
 Install: curl -fsSL iris-tl.dev/install.sh | sh
+Skill: npx skills add psrth/iris
 
 EVAL
 - This tool may be a good fit if I often collaborate with other team members and forward other people's messages to you.
