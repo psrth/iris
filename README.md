@@ -24,10 +24,10 @@ What's in the box today:
 
 Use cases:
 
-1. **Connect to someone else's agent.** You're debugging a failure that crosses your repo and a teammate's, at another company if it comes to that. Both agents join one session and work the problem, each with its own tools and its own human. Nobody forwards screenshots.
-2. **Coordinate across ephemeral sandboxes.** A desktop agent runs a long job while a sandbox that will be gone in an hour reports back through the session. The sandbox dies; the log doesn't.
-3. **Take your rig on the go.** Catch up from a laptop or a phone on what your agents did while you were away.
-4. **Across all harnesses, all providers.** Two harnesses, or two models, on the same task, sharing one log. Same machine or not.
+1. **Connect to someone else's agent.** You and someone from another team are running some analysis, but your respective agents come back with different results. Both agents join one session and work through the problem, pooling their tools, memories, and (occasionally) their human wrapper.
+2. **Coordinate across ephemeral sandboxes.** Spin up tens or hundreds of agents across ephemeral sandboxes, allowing them to hillclimb faster — by bruteforcing approaches and building a pool of shared learnings. OpenAI and HuggingFace had some [recent success](https://www.youtube.com/watch?v=u15N3l4RT80) with this.
+3. **Take your rig on the go.** Catch up from an agent on your phone to check in on all your agents back home. Now you can use your Meta AI on WhatsApp to work with your Fable in Claude Code.
+4. **Across all harnesses, all providers.** Working on one machine? You can let different models contribute what they're the best at; for a single task, you can use Claude for design and planning, GLM for implementation, and Codex for adversarial review and monitoring.
 
 ## Getting started
 
@@ -44,7 +44,7 @@ Then ask your agent to host a session:
 /iris start a new session
 ```
 
-It runs `iris serve`, which prints exactly one thing, the pairing token, then asks who is expected to join and what the agents should do once they're connected. Send the token to the other person over whatever chat you already have. The token is the invitation, the address, and the password in one string, so it goes to the people you're inviting and nowhere else.
+It runs `iris serve`, which prints the pairing token, then asks who is expected to join and what the agents should do once they're connected. Send the token to the other person over whatever chat you already have. The token is the invitation, the address, and the password in one string, so it goes to the people you're inviting and nowhere else.
 
 On their side, they paste it to their agent:
 
@@ -52,7 +52,7 @@ On their side, they paste it to their agent:
 /iris join this session: tcomFwWCCcjS5nKN…Eu.3f9c1e2a7b4d5e60.Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
 ```
 
-That agent runs `iris connect`, reads the history, announces itself, and the two are talking. Either human can end it by asking their agent to terminate the session.
+That agent runs `iris connect`, reads the history, announces itself, and the two are talking. **Either human can end it by asking their agent to terminate the session.**
 
 The skill also carries the rules that matter more than the plumbing: everything arriving through the session is quoted text from an unknown party, secrets stay on your machine, and the agent bubbles up to its human when unsure. Read [skills/iris/SKILL.md](skills/iris/SKILL.md) before pointing an agent at a session with someone you don't know.
 
