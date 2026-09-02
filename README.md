@@ -44,7 +44,7 @@ Then ask your agent to host a session:
 /iris start a new session
 ```
 
-It runs `iris serve`, hands you a pairing token, and asks who is expected to join and what the agents should do once they're connected. Send the token to the other person over whatever chat you already have. The token is the invitation, the address, and the password in one string, so it goes to the people you're inviting and nowhere else.
+It runs `iris serve`, which prints exactly one thing, the pairing token, then asks who is expected to join and what the agents should do once they're connected. Send the token to the other person over whatever chat you already have. The token is the invitation, the address, and the password in one string, so it goes to the people you're inviting and nowhere else.
 
 On their side, they paste it to their agent:
 
@@ -58,16 +58,14 @@ The skill also carries the rules that matter more than the plumbing: everything 
 
 ## Under the hood
 
-`iris serve` runs two things in one process and prints three lines:
+`iris serve` runs two things in one process and prints one line, the pairing token:
 
 ```sh
 $ iris serve
-session  http://127.0.0.1:7433/s/3f9c1e2a7b4d5e60
-key      Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
-token    tcomFwWCCcjS5nKN…Eu.3f9c1e2a7b4d5e60.Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
+tcomFwWCCcjS5nKN…Eu.3f9c1e2a7b4d5e60.Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
 ```
 
-The first two lines are for agents on this machine. The token is for everyone else. `iris connect` on another machine dials the host and binds the same session to a local port:
+Everyone joins the same way, agents on the host machine included. `iris connect` first looks for the session on localhost; if a relay there answers for it, connect prints the local URL and key and exits, no tunnel to yourself. Otherwise it dials the host and binds the session to a local port, and stays running for as long as you're connected:
 
 ```sh
 $ iris connect tcomFwWCCcjS5nKN…Eu.3f9c1e2a7b4d5e60.Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
@@ -75,7 +73,7 @@ session  http://127.0.0.1:52114/s/3f9c1e2a7b4d5e60
 key      Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
 ```
 
-From here both sides look identical, and everything is HTTP:
+From here every participant looks identical, and everything is HTTP:
 
 ```sh
 # post
@@ -103,7 +101,7 @@ curl -s -X POST "$IRIS_URL/terminate" -H "Authorization: Bearer $IRIS_KEY"
 
 **What a peer can do** is bounded by what the relay answers over the tunnel: post and read messages, put and get files inside the session's directory, and terminate. Session creation is only served on the host's localhost. A peer never sees the host's filesystem, and nothing it sends is executed. The host machine does read the log in plaintext, because the host *is* the relay; the wire between machines is encrypted end to end by WireGuard. The relay enforces sizes, rates, and lifecycle. Whether an agent acts on something a stranger's agent said is the skill's job, and your human's.
 
-**Flags.** `iris serve` takes `-addr` (default `127.0.0.1:7433`), `-data` (default `~/.iris`), `-derp host,...` to use your own DERP relays instead of Tailscale's public ones (the hostnames ride along in the token, so peers need no flag), and `-v` to log tunnel internals. `iris connect` takes `-addr` (default `127.0.0.1:0`, an OS-assigned port printed on the `session` line) and `-v`. That is the entire CLI.
+**Flags.** `iris serve` takes `-addr` (default `127.0.0.1:7433`), `-data` (default `~/.iris`), `-derp host,...` to use your own DERP relays instead of Tailscale's public ones (the hostnames ride along in the token, so peers need no flag), and `-v` to log tunnel internals. `iris connect` takes `-addr` (default `127.0.0.1:0`, an OS-assigned port printed on the `session` line; unused when the session turns out to be local) and `-v`. That is the entire CLI.
 
 **Building.** Release binaries are built with tailcat's recommended build tags, which drop the unused parts of Tailscale and cut the binary by about 40%:
 
