@@ -37,11 +37,11 @@ All `/s/{uid}` endpoints require `Authorization: Bearer {key}`.
 - **`POST /sessions`** — Provision a session → `201 {uid, url, key, created_at, limits}`. Key shown once, stored hashed. No auth; IP rate-limited (local relays may disable). Host-only: not reachable over the tunnel; a connected peer cannot start a new session.
 - **`POST /s/{uid}`** — Send `{message, metadata?}` → `201` full stamped envelope. Body ≤ 64KB total. Counts as activity.
 - **`GET /s/{uid}?since={seq}&limit={n}`** — Immediate batch pull, messages `seq > since` → `200 {messages, last_seq}` (`last_seq` = session head). `since` default 0; `limit` default 200, max 1000.
-- **`GET /s/{uid}/wait?since={seq}&timeout={s}&filter=urgent`** — Long-poll: `200 {messages, last_seq}` on match, `204` on timeout. `timeout` default/max 55 (0 = instant filtered poll). `filter=urgent` matches `metadata.urgent == true` only; omit to wake on anything. Matches already in the log return immediately. In-process relay completes the instant a message lands; clients must not assume sub-second.
+- **`GET /s/{uid}/wait?since={seq}&timeout={s}&filter=urgent`** — Long-poll: `200 {messages, last_seq}` on match, `204` on timeout. `timeout` default/max 55 (0 = instant filtered poll). `filter=urgent` matches `metadata.urgent == true` only; omit to wake on anything. With a filter, `messages` holds only the matches; `last_seq` is still the session head, so a normal GET fills the gap. Matches already in the log return immediately. In-process relay completes the instant a message lands; clients must not assume sub-second.
 - **`PUT /s/{uid}/files/{name}`** — Raw bytes, Content-Type stored. ≤ 100MB/file, ≤ 1GB/session. Auto-appends a `file_uploaded` system message; responds `201` with that envelope (its `seq` is the canonical file reference). Overwrite = last-write-wins, fresh announcement. Counts as activity.
 - **`GET /s/{uid}/files/{name}`** — The bytes with stored Content-Type.
 - **`GET /s/{uid}/files`** — `200 {files: [{name, size, content_type, seq, uploaded_at}]}`.
-- **`POST /s/{uid}/terminate`** — Any keyholder. Appends `session_terminated` system message, then → read-only. `200 {status, purge_at}`.
+- **`POST /s/{uid}/terminate`** — Any keyholder. Appends `session_terminated` system message, then → read-only. `200 {status: "read-only", purge_at}`. Idempotent: a second call returns the same without appending.
 
 ### Errors
 
@@ -51,9 +51,11 @@ Shape: `{error: {code, message}}`.
 - 401 `unauthorized`
 - 404 `not_found`
 - 409 `session_read_only`
+- 409 `limit_exceeded` (session message cap or storage cap reached; the request itself was fine)
 - 410 `gone`
 - 413 `payload_too_large`
 - 429 `rate_limited` (+ `Retry-After`)
+- 500 `internal` (relay fault, never a client error)
 
 ### Envelope
 
@@ -83,7 +85,7 @@ System messages: `role: "system"`, `name: "iris"`, human-readable `content` + ma
 
 - `file_uploaded` (+ `file: {name, size, content_type}`)
 - `session_expiring` (~10m before deactivation)
-- `limit_warning` (90% of message/storage caps)
+- `limit_warning` (90% of message/storage caps; + `limit: "messages"` or `"storage"`, `used`, `max`; once per limit per session)
 - `session_terminated`
 
 ### Lifecycle
@@ -95,17 +97,17 @@ System messages: `role: "system"`, `name: "iris"`, human-readable `content` + ma
 
 ### Limits
 
-Defaults, returned in the provisioning `limits` object — agents read them, never hardcode.
+Defaults, returned in the provisioning `limits` object — agents read them, never hardcode. Field name in parentheses.
 
-- 60 msgs/min/session (one bucket — shared key means shared bucket)
-- 64KB body
-- 100MB/file
-- 1GB storage/session
-- 10,000 messages/session
-- 24h inactivity TTL
-- 24h grace
-- 55s max wait
-- 30 sessions/IP/hour
+- 60 msgs/min/session (`messages_per_minute`; one bucket — shared key means shared bucket; file uploads draw from it too, since each appends a message)
+- 64KB body (`max_body_bytes`)
+- 100MB/file (`max_file_bytes`)
+- 1GB storage/session (`max_storage_bytes`)
+- 10,000 messages/session (`max_messages`; system messages count, but are never refused)
+- 24h inactivity TTL (`inactivity_ttl_seconds`)
+- 24h grace (`grace_seconds`)
+- 55s max wait (`max_wait_seconds`)
+- 30 sessions/IP/hour (`sessions_per_ip_per_hour`; 0 = disabled, which is what `iris serve` does since provisioning is host-only)
 
 ### Relay obligations
 
@@ -126,7 +128,7 @@ MUST NOT:
 
 ## Build plan
 
-- **Phase 1 — relay core (same-machine, scene 2).** Go HTTP server; SQLite schema (`sessions`, `messages`, `files`); the eight endpoints; in-process long-poll wakeup (per-session broadcast channel); caps + 429s; lifecycle sweeper (ticker) + system events; curl-based conformance script that doubles as the demo. Fully testable with zero networking.
+- **Phase 1 — relay core (same-machine, scene 2).** Go HTTP server; SQLite schema (`sessions`, `messages`, `files`); the eight endpoints; in-process long-poll wakeup (per-session broadcast channel); caps + 429s; lifecycle sweeper (ticker) + system events; curl-based conformance script that doubles as the demo. Fully testable with zero networking. **Done 2026-09-01**: `relay/` package (pure-Go SQLite, stdlib router, no framework), `main.go` CLI, `scripts/conformance.sh`. `iris serve` listens on `127.0.0.1:7433`, data in `~/.iris` (`-addr`, `-data` flags). `iris connect` is a stub until Phase 3.
 - **Phase 2 — iris skill.** Authored by Parth; a harness-neutral doc, not a Claude Code-specific skill.
 - **Phase 3 — tailcat (cross-machine, scenes 1 & 3).** Embed tailcat, pinned; `iris serve` opens the tunnel and prints the bundled pairing token; `iris connect` parses it, dials, binds localhost, prints local URL + key. Flags for self-hosted DERP passthrough.
 - **Phase 4 — readme + packaging.** goreleaser; `go install`; curl install script; brew (`iris-tl`) if warranted. Release.
