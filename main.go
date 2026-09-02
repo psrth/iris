@@ -23,11 +23,15 @@ import (
 // version is set by the release build.
 var version = "dev"
 
+// localAddr is where iris serve listens by default and where iris connect
+// looks for a session before opening a tunnel.
+const localAddr = "127.0.0.1:7433"
+
 const usage = `usage:
   iris serve [-addr host:port] [-data dir] [-derp host,...] [-v]
         start a relay, open a session, print its pairing token
   iris connect [-addr host:port] [-v] <token>
-        join a session; it appears on localhost
+        join a session; print its local URL and key
   iris -version
 `
 
@@ -63,7 +67,7 @@ func tunnelLogf(verbose bool) logger.Logf {
 
 func serve(args []string) {
 	fs := flag.NewFlagSet("iris serve", flag.ExitOnError)
-	addr := fs.String("addr", "127.0.0.1:7433", "listen address")
+	addr := fs.String("addr", localAddr, "listen address")
 	data := fs.String("data", defaultDataDir(), "data directory")
 	derp := fs.String("derp", "", "self-hosted DERP server hostname(s), comma-separated")
 	verbose := fs.Bool("v", false, "log tunnel internals")
@@ -93,8 +97,7 @@ func serve(args []string) {
 	if err != nil {
 		die("iris serve: tunnel: %v", err)
 	}
-	token := tunnel.Token{Blob: remote.Blob(), UID: uid, Key: key}
-	fmt.Printf("session  http://%s/s/%s\nkey      %s\ntoken    %s\n", local.Addr(), uid, key, token)
+	fmt.Println(tunnel.Token{Blob: remote.Blob(), UID: uid, Key: key})
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -136,6 +139,10 @@ func connect(args []string) {
 	if err != nil {
 		die("iris connect: %v", err)
 	}
+	if servedLocally(token) {
+		fmt.Printf("session  http://%s/s/%s\nkey      %s\n", localAddr, token.UID, token.Key)
+		return
+	}
 	local, err := net.Listen("tcp", *addr)
 	if err != nil {
 		die("iris connect: %v", err)
@@ -155,6 +162,22 @@ func connect(args []string) {
 	if err := peer.Forward(ctx, local, logf); err != nil {
 		die("iris connect: %v", err)
 	}
+}
+
+// servedLocally reports whether the token's session is answered by a relay
+// on this machine at localAddr, in which case no tunnel is needed.
+func servedLocally(t tunnel.Token) bool {
+	req, err := http.NewRequest("GET", "http://"+localAddr+"/s/"+t.UID+"?limit=1", nil)
+	if err != nil {
+		return false
+	}
+	req.Header.Set("Authorization", "Bearer "+t.Key)
+	resp, err := (&http.Client{Timeout: time.Second}).Do(req)
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
 }
 
 func defaultDataDir() string {
