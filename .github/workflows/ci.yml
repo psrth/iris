@@ -1,8 +1,10 @@
 name: ci
 on:
   pull_request:
+    paths: ["**.go", "go.mod", "go.sum", "build-tags.txt", ".github/workflows/ci.yml"]
   push:
     branches: [main]
+    paths: ["**.go", "go.mod", "go.sum", "build-tags.txt", ".github/workflows/ci.yml"]
 jobs:
   test:
     runs-on: ubuntu-latest
