@@ -20,7 +20,7 @@ Same-machine participants skip the tunnel and hit localhost directly. `iris serv
 - **Transport.** Plain HTTP only. No WebSocket, SSE, or WebRTC. Push = long-poll, completed in-process the moment a message lands.
 - **Session model.** N-party broadcast append-only log. No `to:`/DMs — open another session for a private aside.
 - **Auth.** One shared bearer key per session. Participants self-identify by handle; the relay does not distinguish them. Impersonation-on-leak accepted; mitigation is operational (`/terminate`, short lifecycle).
-- **Pairing token.** One self-contained string: wraps the tailcat token + session uid + bearer key, so possession of the string = membership.
+- **Pairing token.** One self-contained string: wraps the tailcat token + session uid + bearer key, so possession of the string = membership. Format: `<tailcat blob>.<uid>.<key>`; the blob embeds the DERP relay details, so a peer needs no DERP map fetch.
 - **Envelope.** OpenAI-chat-compatible `message` + relay stamps + open `metadata` (contract below).
 - **Trust.** Offloaded to the endpoints (skill guidance). The relay enforces infra caps only, never content policy.
 - **Privacy.** Host machine reads the log — the host *is* the relay. Message-level E2E is a non-goal.
@@ -130,7 +130,7 @@ MUST NOT:
 
 - **Phase 1 — relay core (same-machine, scene 2).** Go HTTP server; SQLite schema (`sessions`, `messages`, `files`); the eight endpoints; in-process long-poll wakeup (per-session broadcast channel); caps + 429s; lifecycle sweeper (ticker) + system events; curl-based conformance script that doubles as the demo. Fully testable with zero networking. **Done 2026-09-01**: `relay/` package (pure-Go SQLite, stdlib router, no framework), `main.go` CLI, `scripts/conformance.sh`. `iris serve` listens on `127.0.0.1:7433`, data in `~/.iris` (`-addr`, `-data` flags). `iris connect` is a stub until Phase 3.
 - **Phase 2 — iris skill.** Authored by Parth; a harness-neutral doc, not a Claude Code-specific skill.
-- **Phase 3 — tailcat (cross-machine, scenes 1 & 3).** Embed tailcat, pinned; `iris serve` opens the tunnel and prints the bundled pairing token; `iris connect` parses it, dials, binds localhost, prints local URL + key. Flags for self-hosted DERP passthrough.
+- **Phase 3 — tailcat (cross-machine, scenes 1 & 3).** Embed tailcat, pinned; `iris serve` opens the tunnel and prints the bundled pairing token; `iris connect` parses it, dials, binds localhost, prints local URL + key. Flags for self-hosted DERP passthrough. **Done 2026-09-01**: `tunnel/` package on tailcat v0.4.0. Verified against the source: one token admits any number of peers (each handshake adds a WireGuard peer), and every inbound TCP stream gets its own handler, so HTTP fan-in just works. The relay is served inside the tunnel on port 7433 with provisioning removed; `iris connect` pings the host first (30s), then forwards a localhost listener (`-addr`, default OS-assigned port). `-derp host,...` on serve pins self-hosted relays; `-v` on either side prints tunnel internals. Scene 3 verified live: peer joined in under a second, 3MB file round-tripped intact.
 - **Phase 4 — readme + packaging.** goreleaser; `go install`; curl install script; brew (`iris-tl`) if warranted. Release.
 - **Phase 5 — website.**
 

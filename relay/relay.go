@@ -166,10 +166,18 @@ func (r *Relay) uids(where string, args ...any) []string {
 	return uids
 }
 
-// Handler returns the relay's HTTP surface.
-func (r *Relay) Handler() http.Handler {
+// Handler returns the relay's full HTTP surface.
+func (r *Relay) Handler() http.Handler { return r.handler(true) }
+
+// RemoteHandler is Handler without session provisioning, for listeners
+// that peers can reach: only the host creates sessions.
+func (r *Relay) RemoteHandler() http.Handler { return r.handler(false) }
+
+func (r *Relay) handler(provision bool) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /sessions", r.createSession)
+	if provision {
+		mux.HandleFunc("POST /sessions", r.createSession)
+	}
 	mux.HandleFunc("POST /s/{uid}", r.postMessage)
 	mux.HandleFunc("GET /s/{uid}", r.getMessages)
 	mux.HandleFunc("GET /s/{uid}/wait", r.wait)
