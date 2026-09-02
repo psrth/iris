@@ -94,11 +94,12 @@ button { font: inherit; color: inherit; }
 .square.plain { background: transparent; }
 .square.plain:hover { background: var(--chip); }
 .ghbtn {
-  display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px;
-  background: var(--chip); color: var(--ink); font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
-  transition: background 0.2s;
+  display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px;
+  background: transparent; color: var(--ink); border: 1px solid var(--ink);
+  font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+  transition: background 0.15s, color 0.15s;
 }
-.ghbtn:hover { background: var(--line); }
+.ghbtn:hover { background: var(--ink); color: var(--bg); }
 
 /* ---- typography ------------------------------------------------------------ */
 .label {
@@ -260,8 +261,8 @@ pre.cmd {
 /* ---- toast (sonner, unstyled) ---------------------------------------------- */
 .toast {
   display: flex; align-items: center; height: 36px; padding: 0 14px;
-  background: var(--surface); color: var(--ink); border: 1px solid var(--hairline-2);
-  font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.1em; white-space: nowrap;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--ink);
+  font-family: var(--font-mono), monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; white-space: nowrap;
   width: max-content; margin-left: auto;
 }
 
@@ -276,7 +277,6 @@ pre.cmd {
 /* ---- responsive ------------------------------------------------------------ */
 @media (max-width: 719px) {
   .nav { height: 88px; padding-top: 12px; }
-  .terrain .wide { padding: 0; }
   .life { padding: 14px; }
   .life .cap { font-size: 15px; }
   .row { grid-template-columns: 1fr; gap: 6px; padding: 28px 0; }

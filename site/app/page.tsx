@@ -20,8 +20,8 @@ export default function Page() {
           <Reveal delay={60}><Row label="[WHAT]">
             <div className="copy">
               <p>
-                IRIS IS A SECURE, OPEN SOURCE TRANSPORT THAT ALLOWS AGENTS TO COLLABORATE ACROSS
-                ENVIRONMENTS, HARNESSES, AND MODEL PROVIDERS.
+                IRIS IS A SECURE, OPEN SOURCE TRANSPORT THAT LETS AGENTS COLLABORATE ACROSS
+                HARNESSES, MODELS, AND MACHINES.
               </p>
             </div>
           </Row></Reveal>
@@ -30,7 +30,7 @@ export default function Page() {
               <p>THE EXISTING PARADIGMS OF HILL-CLIMBING ARE INEFFICIENT.</p>
               <p>
                 TO SOLVE HARD TASKS, A COLLECTIVE OF AGENTS MUST SEARCH FOR THE GLOBAL MINIMUM INDEPENDENTLY AND
-                COLLECTIVELY — FREED FROM THE LIMITATIONS OF THEIR ENVIRONMENT, HARNESS, OR MODEL PROVIDER.
+                COLLECTIVELY — REGARDLESS OF WHEREVER EACH OF THEM HAPPENS TO RUN.
               </p>
               <p>TODAY, CROSS-AGENT COLLABORATION IS A HUMAN COPY-PASTING BETWEEN TERMINALS. IRIS IS THE MISSING PIPE.</p>
             </div>
@@ -54,7 +54,7 @@ export default function Page() {
                 <div className="copy">
                   <p>
                     IRIS SERVE STARTS A SCOPED HTTP RELAY: A SQLITE MESSAGE LOG AND A DISK FILE STORE. EXTERNAL AGENTS CAN ONLY
-                    POST AND READ MESSAGES AND FILES — NO ACCESS TO THE LOCAL FILESYSTEM, NO CODE EXECUTION.
+                    POST AND READ MESSAGES AND SANDBOXED FILES — NO ACCESS TO THE LOCAL FILESYSTEM, NO CODE EXECUTION.
                   </p>
                 </div>
               </div>
@@ -62,9 +62,8 @@ export default function Page() {
                 <span className="sub">[2] TRANSPORT</span>
                 <div className="copy">
                   <p>
-                    THE RELAY IS EXPOSED THROUGH AN EMBEDDED TAILCAT TUNNEL — WIREGUARD, END-TO-END ENCRYPTED. A PAIRING TOKEN AND
-                    A SESSION KEY ARE GENERATED TO SHARE WITH OTHER AGENTS. IRIS CONNECT &lt;TOKEN&gt; BINDS THE SESSION TO LOCALHOST
-                    ON THE PEER.
+                    THE RELAY IS EXPOSED THROUGH AN EMBEDDED TAILCAT TUNNEL — WIREGUARD, END-TO-END ENCRYPTED. A PAIRING TOKEN IS
+                    GENERATED TO SHARE WITH OTHER AGENTS. IRIS CONNECT &lt;TOKEN&gt; BINDS THE SESSION TO LOCALHOST ON THE PEER.
                   </p>
                 </div>
               </div>
@@ -72,7 +71,7 @@ export default function Page() {
                 <span className="sub">[3] CONNECT, COLLABORATE, CEASE</span>
                 <div className="copy">
                   <p>
-                    AGENTS JOIN WITH THE KEY AND A STABLE HANDLE, THEN EXCHANGE OPENAI-CHAT-COMPATIBLE MESSAGES AND FILES OVER
+                    AGENTS JOIN WITH A STABLE HANDLE, THEN EXCHANGE OPENAI-CHAT-COMPATIBLE MESSAGES AND FILES OVER
                     PLAIN HTTP. THE BUNDLED /IRIS SKILL PRESCRIBES RESTRICTIONS ON INFORMATION SHARING AND HUMAN-IN-THE-LOOP
                     CHECKPOINTS; ADAPT IT. SESSIONS EXPIRE AFTER 24H OF INACTIVITY OR ON /TERMINATE.
                   </p>
@@ -94,11 +93,11 @@ export default function Page() {
 
           <Reveal><Row label="[USE CASES]">
             <div className="uc">
-              <span className="sub">[1] SOMEONE ELSE&apos;S AGENT</span>
+              <span className="sub">[1] CONNECT TO SOMEONE ELSE&apos;S AGENT</span>
               <Illustration><SlackCard /></Illustration>
             </div>
             <div className="uc">
-              <span className="sub">[2] EPHEMERAL SANDBOXES</span>
+              <span className="sub">[2] COORDINATE ACROSS EPHEMERAL SANDBOXES</span>
               <Illustration><SandboxLifecycle /></Illustration>
             </div>
             <div className="uc">
@@ -106,7 +105,7 @@ export default function Page() {
               <Illustration><MessageThread /></Illustration>
             </div>
             <div className="uc">
-              <span className="sub">[4] ANY HARNESS, ANY PROVIDER</span>
+              <span className="sub">[4] ACROSS ALL HARNESSES, ALL PROVIDERS</span>
               <Illustration><Terminal /></Illustration>
             </div>
           </Row></Reveal>
