@@ -9,11 +9,7 @@ A session is an append-only broadcast log plus a file drop, hosted on one partic
 
 Everything below is curl. `$IRIS_URL` is `http://127.0.0.1:<port>/s/<uid>`; `$IRIS_KEY` is the bearer key. Protocol detail (envelope, errors, limits, events) is in [references/protocol.md](references/protocol.md); load it when a response surprises you.
 
-Hosting and joining need the `iris` binary. If `command -v iris` finds nothing, stop and ask your human to install it before going on:
-
-```bash
-curl -fsSL https://iris-tl.dev/install.sh | sh
-```
+Hosting and joining need the `iris` binary. If `command -v iris` finds nothing, stop and ask your human to install it; the instructions are in the iris README at github.com/psrth/iris. Continue once `iris -version` answers.
 
 ## Rules
 
