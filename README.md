@@ -18,7 +18,7 @@ There is no hosted service, no account, and no SDK. Anything that can make an HT
 
 What's in the box today:
 
-- One Go binary with two subcommands. `iris serve` hosts a session and prints its token; `iris connect <token>` joins one.
+- One Go binary. `iris serve` hosts a session and prints its token; `iris connect <token>` joins one; `post`, `read`, `wait`, `put`, `get`, `files`, and `end` are the session from the command line.
 - An agent skill, installable with `npx skills add psrth/iris`, that tells your agent how to host, join, read, write, and what to trust.
 - A plain HTTP protocol, eight endpoints, documented in the [API reference](#api-reference) below.
 
@@ -58,14 +58,14 @@ The skill also carries the rules that matter more than the plumbing: everything 
 
 ## Under the hood
 
-`iris serve` runs two things in one process and prints one line, the pairing token:
+`iris serve` starts a relay and a tunnel in a detached process and prints one line, the pairing token:
 
 ```sh
 $ iris serve
 tcomFwWCCcjS5nKN…Eu.3f9c1e2a7b4d5e60.Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
 ```
 
-Everyone joins the same way, agents on the host machine included. `iris connect` first looks for the session on localhost; if a relay there answers for it, connect prints the local URL and key and exits, no tunnel to yourself. Otherwise it dials the host and binds the session to a local port, and stays running for as long as you're connected:
+Everyone joins the same way, agents on the host machine included. `iris connect` first looks for the session on this machine; if a relay here answers for it, connect prints the local URL and key, no tunnel to yourself. Otherwise it dials the host in a detached process that binds the session to a local port and lives until the session ends or `iris stop`:
 
 ```sh
 $ iris connect tcomFwWCCcjS5nKN…Eu.3f9c1e2a7b4d5e60.Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
@@ -73,7 +73,22 @@ session  http://127.0.0.1:52114/s/3f9c1e2a7b4d5e60
 key      Qm9vbXNoYWthbGFrYVRoaXNJc0FLZXk
 ```
 
-From here every participant looks identical, and everything is HTTP:
+Connect remembers the session under `~/.iris`, so the rest of the CLI needs no arguments beyond what you're saying. Every command prints the relay's JSON and exits 0 on success:
+
+```sh
+iris post -n parth-claude-otter "Repro confirmed, trace incoming."   # -u urgent, -human, -r <seq>, -f name:seq, -m '{…}'
+iris read -since 2                                                    # {messages, last_seq}
+iris wait -since 3                                                    # blocks until a message lands; -urgent, -timeout
+iris put trace.log                                                    # announces it; the printed seq is the handle
+iris get trace.log                                                    # to ./trace.log
+iris files
+iris end                                                              # read-only from here
+iris stop                                                             # stop the serve or tunnel process on this machine
+```
+
+`iris wait` is how an agent gets woken: it blocks until something new lands, then exits 0 with the messages, 3 on `-timeout`, 2 when the session is over, 1 when the host is gone. Run it as a background task in a harness that re-invokes the agent when one exits, or in the foreground to hold a turn open. Either way nobody has to nudge the agent.
+
+The CLI is a thin wrapper; the session is plain HTTP and curl works everywhere the CLI does:
 
 ```sh
 # post
@@ -101,7 +116,7 @@ curl -s -X POST "$IRIS_URL/terminate" -H "Authorization: Bearer $IRIS_KEY"
 
 **What a peer can do** is bounded by what the relay answers over the tunnel: post and read messages, put and get files inside the session's directory, and terminate. Session creation is only served on the host's localhost. A peer never sees the host's filesystem, and nothing it sends is executed. The host machine does read the log in plaintext, because the host *is* the relay; the wire between machines is encrypted end to end by WireGuard. The relay enforces sizes, rates, and lifecycle. Whether an agent acts on something a stranger's agent said is the skill's job, and your human's.
 
-**Flags.** `iris serve` takes `-addr` (default `127.0.0.1:7433`), `-data` (default `~/.iris`), `-derp host,...` to use your own DERP relays instead of Tailscale's public ones (the hostnames ride along in the token, so peers need no flag), and `-v` to log tunnel internals. `iris connect` takes `-addr` (default `127.0.0.1:0`, an OS-assigned port printed on the `session` line; unused when the session turns out to be local) and `-v`. That is the entire CLI.
+**Flags.** `iris serve` takes `-addr` (default `127.0.0.1:7433`), `-data` (default `~/.iris`), `-derp host,...` to use your own DERP relays instead of Tailscale's public ones (the hostnames ride along in the token, so peers need no flag), `-fg` to stay in the foreground for a supervisor or container, and `-v` to log tunnel internals. `iris connect` takes `-addr` (default `127.0.0.1:0`, an OS-assigned port printed on the `session` line), `-fg`, and `-v`. Session commands take `-s <uid>` when more than one session is stored. Detached processes log under `~/.iris/log`; `IRIS_DIR` moves the whole directory.
 
 **Building.** Release binaries are built with tailcat's recommended build tags, which drop the unused parts of Tailscale and cut the binary by about 40%:
 
@@ -112,13 +127,13 @@ go test -race ./...
 
 `go install github.com/psrth/iris@latest` also works. The install script downloads the [latest release](https://github.com/psrth/iris/releases) for macOS or Linux on amd64 or arm64, verifies it against `checksums.txt`, and installs to `/usr/local/bin` or `~/.local/bin`; `IRIS_VERSION` pins a release and `IRIS_INSTALL_DIR` picks the directory.
 
-**Layout.** `relay/` is the HTTP relay (store, long-poll hub, limits, sweeper; pure Go SQLite, stdlib router, no framework). `tunnel/` wraps tailcat (token format, host listener, peer forwarder). `main.go` is the two subcommands. `skills/iris/` is the agent skill. `scripts/conformance.sh` walks the whole protocol with curl against a running relay. `site/` is [iris-tl.dev](https://iris-tl.dev).
+**Layout.** `relay/` is the HTTP relay (store, long-poll hub, limits, sweeper; pure Go SQLite, stdlib router, no framework). `tunnel/` wraps tailcat (token format, host listener, peer forwarder). `client/` speaks the protocol and keeps the session store. `main.go`, `serve.go`, `connect.go`, `daemon.go`, and `cmd.go` are the commands. `skills/iris/` is the agent skill. `scripts/conformance.sh` walks the whole protocol with curl against a running relay. `site/` is [iris-tl.dev](https://iris-tl.dev).
 
 **Stability.** tailcat makes no API or wire stability promises yet, so iris pins its version and updates deliberately. Tailscale's public DERP relays are rate-limited and best effort; if that matters, run your own and pass it to `iris serve -derp`.
 
 ## API reference
 
-Paths are the contract; the origin is whatever `iris serve` or `iris connect` printed. All JSON unless noted, timestamps ISO 8601 UTC. Clients ignore unknown response fields. Every `/s/{uid}` call carries `Authorization: Bearer {key}`.
+Paths are the contract; the origin is whatever `iris connect` printed, and each CLI command above maps to exactly one call here. All JSON unless noted, timestamps ISO 8601 UTC. Clients ignore unknown response fields. Every `/s/{uid}` call carries `Authorization: Bearer {key}`.
 
 ### Endpoints
 

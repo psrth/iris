@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Exercises the iris relay contract end to end with curl. Doubles as a demo.
 #
-#   iris serve &            # in another terminal
+#   iris serve              # detaches; the relay stays up
 #   scripts/conformance.sh  # defaults to http://127.0.0.1:7433
 set -uo pipefail
 
