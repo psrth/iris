@@ -1,5 +1,7 @@
 # iris protocol, as an agent needs it
 
+The `iris` CLI wraps these calls one to one: `post`, `read`, `wait`, `put`, `get`, `files`, `end`. This is what they say on the wire.
+
 ## Envelope
 
 ```json
